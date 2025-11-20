@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -21,18 +22,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.perrosygatos.data.model.Pet
+import com.example.perrosygatos.viewModel.AuthViewModel
+import com.example.perrosygatos.viewModel.RegisterState
 
-data class Pet(val type: String, val name: String)
+// SOLUCIÓN FINAL: Se define PetUiState directamente en este archivo para forzar la visibilidad.
+sealed interface PetUiState {
+    data class Success(val pets: List<Pet>) : PetUiState
+    data class Error(val message: String) : PetUiState
+    object Loading : PetUiState
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
-    onRegisterSuccess: () -> Unit,
     onLoginClick: () -> Unit,
-    viewModel: AuthViewModel = viewModel()
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
-    val state by viewModel.registerState.collectAsState()
+    val state by viewModel.registerState.collectAsState<RegisterState>()
+    val petState by viewModel.petState.collectAsState()
 
     LazyColumn(
         modifier = Modifier
@@ -111,9 +120,31 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        items(state.pets) { pet ->
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("${pet.name} (${pet.type})")
+        val currentPetState = petState
+        if (currentPetState is PetUiState.Loading) {
+            item {
+                CircularProgressIndicator()
+            }
+        }
+
+        if (currentPetState is PetUiState.Error) {
+            item {
+                Text(currentPetState.message, color = androidx.compose.material3.MaterialTheme.colorScheme.error)
+            }
+        }
+
+        if (currentPetState is PetUiState.Success) {
+            items(currentPetState.pets) { pet ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("${pet.name} (${pet.type})")
+                    Button(onClick = { viewModel.deletePet(pet.id) }) {
+                        Text("Eliminar")
+                    }
+                }
             }
         }
 
@@ -137,12 +168,12 @@ fun RegisterScreen(
                 onExpandedChange = { expanded = !expanded }
             ) {
                 TextField(
+                    modifier = Modifier.menuAnchor().fillMaxWidth(),
                     value = petType,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Tipo de Mascota") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
                 )
                 ExposedDropdownMenu(
                     expanded = expanded,
@@ -163,7 +194,7 @@ fun RegisterScreen(
 
             Button(onClick = {
                 if (petName.isNotBlank()) {
-                    viewModel.onAddPet(Pet(petType, petName))
+                    viewModel.addPet(Pet(id=0, name=petName, type=petType))
                     petName = ""
                 }
             }) {
@@ -173,13 +204,21 @@ fun RegisterScreen(
         }
 
         item {
+            state.errorMessage?.let {
+                Text(it, color = androidx.compose.material3.MaterialTheme.colorScheme.error)
+            }
             Button(
                 onClick = {
                     viewModel.register()
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !state.isLoading
             ) {
-                Text(text = "Registrarse")
+                if (state.isLoading) {
+                    CircularProgressIndicator()
+                } else {
+                    Text(text = "Registrarse")
+                }
             }
             Spacer(modifier = Modifier.height(8.dp))
             Button(

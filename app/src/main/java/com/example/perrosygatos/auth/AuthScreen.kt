@@ -4,16 +4,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.perrosygatos.viewModel.AuthViewModel
+import com.example.perrosygatos.viewModel.RegisterState
 
 @Composable
-fun AuthScreen(onLoginSuccess: () -> Unit) {
+fun AuthScreen(
+    onLoginSuccess: () -> Unit,
+    authViewModel: AuthViewModel
+) {
     val navController = rememberNavController()
-    val authViewModel: AuthViewModel = viewModel()
-    val registerState by authViewModel.registerState.collectAsState()
+    val registerState by authViewModel.registerState.collectAsState<RegisterState>()
 
     LaunchedEffect(registerState.registrationSuccess) {
         if (registerState.registrationSuccess) {
@@ -23,7 +26,7 @@ fun AuthScreen(onLoginSuccess: () -> Unit) {
         }
     }
 
-    NavHost(navController = navController, startDestination = "register") {
+    NavHost(navController = navController, startDestination = "login") {
         composable("login") {
             LoginScreen(
                 onLoginSuccess = onLoginSuccess,
@@ -33,9 +36,6 @@ fun AuthScreen(onLoginSuccess: () -> Unit) {
         }
         composable("register") {
             RegisterScreen(
-                onRegisterSuccess = { 
-                    navController.navigate("login")
-                },
                 onLoginClick = { navController.navigate("login") },
                 viewModel = authViewModel
             )
