@@ -1,14 +1,10 @@
 package com.example.perrosygatos.auth
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.perrosygatos.viewModel.AuthViewModel
-import com.example.perrosygatos.viewModel.RegisterState
 
 @Composable
 fun AuthScreen(
@@ -16,15 +12,9 @@ fun AuthScreen(
     authViewModel: AuthViewModel
 ) {
     val navController = rememberNavController()
-    val registerState by authViewModel.registerState.collectAsState<RegisterState>()
 
-    LaunchedEffect(registerState.registrationSuccess) {
-        if (registerState.registrationSuccess) {
-            navController.navigate("login") { 
-                popUpTo("register") { inclusive = true } 
-            }
-        }
-    }
+    // SE ELIMINA EL LaunchedEffect QUE CAUSABA LA NAVEGACIÓN AUTOMÁTICA.
+    // La navegación ahora es controlada por la interacción del usuario.
 
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {

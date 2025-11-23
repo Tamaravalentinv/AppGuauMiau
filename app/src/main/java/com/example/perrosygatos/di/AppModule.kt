@@ -2,8 +2,11 @@ package com.example.perrosygatos.di
 
 import android.content.Context
 import com.example.perrosygatos.data.datastore.UserDataStore
+import com.example.perrosygatos.data.datastore.UserDataStoreImpl
 import com.example.perrosygatos.data.network.AuthService
 import com.example.perrosygatos.data.network.PetService
+import com.example.perrosygatos.data.repository.AuthRepository
+import com.example.perrosygatos.data.repository.PetRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -41,9 +44,18 @@ object AppModule {
     @Provides
     @Singleton
     fun provideUserDataStore(@ApplicationContext context: Context): UserDataStore {
-        return UserDataStore(context)
+        return UserDataStoreImpl(context)
     }
-    
-    // Se eliminan las funciones @Provides para AuthRepository y PetRepository.
-    // Hilt ya sabe cómo construirlas gracias a la anotación @Inject en sus constructores.
+
+    @Provides
+    @Singleton
+    fun provideAuthRepository(authService: AuthService, userDataStore: UserDataStore): AuthRepository {
+        return AuthRepository(authService, userDataStore)
+    }
+
+    @Provides
+    @Singleton
+    fun providePetRepository(petService: PetService): PetRepository {
+        return PetRepository(petService)
+    }
 }

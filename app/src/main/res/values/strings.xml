@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">perrosygatos</string>
+    <string name="pet_photo_description">Foto de la mascota</string>
 </resources>

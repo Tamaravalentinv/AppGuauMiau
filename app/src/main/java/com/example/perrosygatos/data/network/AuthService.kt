@@ -1,4 +1,4 @@
-package com.example.perrosygatos.data.network
+package com.example.perrosygatos.data.network // <-- CORREGIDO
 
 import com.example.perrosygatos.data.model.LoginRequest
 import com.example.perrosygatos.data.model.LoginResponse

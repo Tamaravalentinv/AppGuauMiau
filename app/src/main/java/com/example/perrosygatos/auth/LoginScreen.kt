@@ -16,14 +16,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+// 🛑 IMPORTANTE: Cambiamos la importación del proveedor de ViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.perrosygatos.viewModel.AuthViewModel
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onRegisterClick: () -> Unit,
-    viewModel: AuthViewModel = viewModel()
+    // 🛑 CORRECCIÓN: Usar hiltViewModel() como valor por defecto, no viewModel()
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
     val state by viewModel.loginState.collectAsState()
     var showForgotPasswordMessage by remember { mutableStateOf(false) }
@@ -73,7 +75,8 @@ fun LoginScreen(
 
         Button(
             onClick = { viewModel.login() },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isLoading // Deshabilitar el botón durante la carga
         ) {
             Text(text = "Iniciar Sesión")
         }

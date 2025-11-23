@@ -23,36 +23,36 @@ import com.example.perrosygatos.viewModel.AuthViewModel
 import com.example.perrosygatos.viewModel.LoginState
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(setTitle: (String) -> Unit) {
     val navController = rememberNavController()
     val authViewModel: AuthViewModel = hiltViewModel()
     val loginState by authViewModel.loginState.collectAsState<LoginState>()
 
-    // Unificamos la lógica en un solo LaunchedEffect para evitar condiciones de carrera.
-    LaunchedEffect(key1 = loginState.sessionActive) {
-        // La primera vez que entra, sessionActive es null, así que llamamos a onAppStart()
-        if (loginState.sessionActive == null) {
-            authViewModel.onAppStart()
-            return@LaunchedEffect // Salimos para esperar a que onAppStart() actualice el estado
-        }
+    LaunchedEffect(Unit) {
+        authViewModel.onAppStart()
+    }
 
-        // Una vez que onAppStart() ha terminado, sessionActive será true o false, y navegamos
-        if (loginState.sessionActive == true) {
-            navController.navigate("home") {
-                popUpTo(navController.graph.startDestinationId) { inclusive = true }
-            }
-        } else {
-            navController.navigate("auth") {
+    LaunchedEffect(loginState.sessionActive) {
+        val route = when (loginState.sessionActive) {
+            true -> "home"
+            false -> "auth"
+            null -> "loader"
+        }
+        if (route != "loader") { // Evita la navegación inicial si ya estamos en loader
+            navController.navigate(route) {
                 popUpTo(navController.graph.startDestinationId) { inclusive = true }
             }
         }
     }
 
-    NavHost(navController = navController, startDestination = "loader") {
+    // SOLUCIÓN: Se cambia la ruta inicial para saltar el loader que causa el crash.
+    NavHost(navController = navController, startDestination = "auth") {
         composable("loader") {
+            setTitle("Cargando...")
             Loader()
         }
         composable("auth") {
+            setTitle("Autenticación")
             AuthScreen(
                 onLoginSuccess = {
                     navController.navigate("home") {
@@ -63,12 +63,14 @@ fun AppNavigation() {
             )
         }
         composable("home") {
+            setTitle("Inicio")
             HomeScreen(
                 onNavigateToPetManagement = { navController.navigate("pet_management") },
                 onLogout = { authViewModel.logout() }
             )
         }
         composable("pet_management") {
+            setTitle("Administrar Mascotas")
             PetManagementScreen()
         }
     }

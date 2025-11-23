@@ -19,4 +19,5 @@ data class RegisterState(
     val registrationSuccess: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
+    // Se ha eliminado el campo userMessage para usar un SharedFlow en su lugar.
 )

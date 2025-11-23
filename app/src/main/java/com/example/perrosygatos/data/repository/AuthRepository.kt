@@ -12,15 +12,13 @@ import javax.inject.Singleton
 @Singleton
 class AuthRepository @Inject constructor(
     private val authService: AuthService,
-    private val userDataStore: UserDataStore // Inyectamos el UserDataStore
+    private val userDataStore: UserDataStore
 ) {
 
-    // NUEVO: Verifica si hay un token guardado
     suspend fun checkSession(): Boolean {
         return userDataStore.sessionToken.first() != null
     }
 
-    // NUEVO: Borra el token de sesión
     suspend fun logout() {
         userDataStore.clearSessionToken()
     }
@@ -45,7 +43,6 @@ class AuthRepository @Inject constructor(
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body != null) {
-                    // Guardamos el token al hacer login
                     userDataStore.saveSessionToken(body.token)
                     Result.success(body)
                 } else {

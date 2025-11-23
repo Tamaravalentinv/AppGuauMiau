@@ -1,85 +1,88 @@
 # AppGuauMiau 🐾
+
 # link de trello: https://trello.com/b/iypQDvCz/appguaumiau
+
 ## Descripción
 
-AppGuauMiau es una aplicación de Android que sirve como un excelente ejemplo de una implementación moderna de un flujo de autenticación de usuarios. La aplicación está construida completamente en **Kotlin** y utiliza las últimas librerías de **Jetpack**, incluyendo **Compose** para la interfaz de usuario y **Navigation** para gestionar las transiciones entre pantallas.
-
-El proyecto demuestra una arquitectura limpia y modular, separando la lógica de la interfaz de usuario, lo que lo convierte en una base sólida para proyectos más complejos.
+AppGuauMiau es una aplicación de Android construida con tecnologías modernas, sirviendo como un proyecto ejemplar que demuestra una arquitectura robusta, una interfaz de usuario limpia y una experiencia de usuario bien pensada. La aplicación utiliza **Kotlin** como lenguaje principal y está desarrollada siguiendo las últimas tendencias de **Jetpack**, con **Compose** para la UI y **Hilt** para la inyección de dependencias.
 
 ## Funcionalidades Detalladas
 
-*   **Flujo de Autenticación Completo**:
-    *   **Pantalla de Registro**: Permite a los nuevos usuarios crear una cuenta para acceder a la aplicación.
-    *   **Pantalla de Inicio de Sesión**: Permite a los usuarios existentes iniciar sesión de forma segura.
-    *   **Navegación Protegida**: Tras un inicio de sesión exitoso, el usuario es redirigido a la pantalla principal y la pantalla de autenticación es eliminada del historial de navegación para prevenir retornos no deseados.
-*   **Conectividad y CRUD de Mascotas**:
-    *   **Networking con Retrofit**: Integración de Retrofit para la comunicación con un backend.
-    *   **CRUD de Mascotas**: Funcionalidad para añadir, ver y eliminar mascotas, con una pantalla dedicada para su gestión.
-*   **Persistencia y Arquitectura**:
-    *   **Persistencia de Sesión con DataStore**: Se utiliza Jetpack DataStore para guardar el token de sesión, permitiendo que la app recuerde al usuario.
-    *   **Interfaz de Estado (UI State)**: El ViewModel expone el estado de la UI (`Loading`, `Success`, `Error`) para mostrar la información de manera reactiva.
-*   **Integración con Recursos Nativos**:
-    *   **Cámara**: Acceso a la cámara del dispositivo para tomar fotos.
-    *   **Geolocalización**: Obtención de la ubicación del dispositivo, solicitando los permisos necesarios.
-*   **Mejoras en la Experiencia de Usuario (UX/UI)**:
-    *   **Animación con Lottie**: Se muestra una animación de carga personalizada al iniciar la aplicación.
+*   **Flujo de Autenticación Completo**: Registro, inicio de sesión y gestión de sesión persistente con DataStore.
+*   **CRUD de Mascotas**: Funcionalidad completa para añadir, ver y eliminar mascotas, con comunicación a un backend a través de Retrofit.
+*   **Integración con Recursos Nativos**: Acceso a la **Cámara** para tomar fotos y a la **Geolocalización** para obtener la ubicación del dispositivo.
+*   **Feedback al Usuario**: Uso de Snackbars para comunicar el resultado de las operaciones (ej. "Usuario creado con éxito").
+*   **Diseño Moderno con Material Design 3**: Implementación de una paleta de colores personalizada, una escala tipográfica jerárquica y una estructura de navegación clara.
+*   **Animaciones**: Integración de Lottie para mostrar animaciones de carga, mejorando la experiencia visual.
 
-*   **Interfaz de Usuario Moderna y Reactiva**:
-    *   Desarrollada 100% con **Jetpack Compose**, el toolkit de UI declarativo de Android.
-    *   Uso de `NavHost` de **Jetpack Navigation** para una navegación fluida y desacoplada entre los diferentes `Composables`.
+## Arquitectura y Diseño
 
-*   **Arquitectura Sólida**:
-    *   Implementación del patrón de arquitectura **MVVM (Model-View-ViewModel)**, separando la lógica de negocio (`ViewModel`) de la lógica de la interfaz de usuario (`View`).
+### A. Estructura del Proyecto (MVVM)
+
+La aplicación sigue el patrón de arquitectura **Model-View-ViewModel (MVVM)**, que promueve una clara separación de responsabilidades, facilitando el mantenimiento, la escalabilidad y las pruebas.
+
+*   **Justificación de MVVM**: Se eligió MVVM porque separa la lógica de la UI de la lógica de negocio. La Vista (Composable) solo se encarga de mostrar los datos y notificar las interacciones del usuario, mientras que el ViewModel maneja el estado y la lógica, sobreviviendo a los cambios de configuración. Esta separación hace que el código sea más limpio y fácil de depurar.
+
+*   **Screens / Composables (`/auth`, `/home`)**: Contienen la interfaz de usuario, construida con Jetpack Compose. Son "tontos" en el sentido de que solo observan el estado del ViewModel y le notifican las acciones del usuario (ej. `viewModel.login()`).
+
+*   **ViewModel (`/viewModel`)**: Contiene la lógica de presentación y el estado de la UI. El `AuthViewModel` utiliza `StateFlow` para exponer el estado (`LoginState`, `RegisterState`) a los Composables y un `SharedFlow` para eventos de una sola vez (como mostrar un Snackbar). No tiene conocimiento directo de la UI de Android, lo que facilita las pruebas unitarias.
+
+*   **Repository (`/data/repository`)**: Actúa como una única fuente de verdad para los datos. Los repositorios (`AuthRepository`, `PetRepository`) encapsulan la lógica para acceder a los datos, ya sea desde la red (Retrofit) o desde el almacenamiento local (DataStore). Abstraen el origen de los datos del resto de la app.
+
+*   **Model (`/data/model`)**: Son las clases de datos (`User`, `Pet`, `LoginRequest`) que definen la estructura de la información. Son simples contenedores de datos (POJOs/data classes).
+
+*   **Backend (Teórico)**: Aunque no forma parte de este proyecto Android, el backend sería una aplicación de servidor (ej. construida con Spring Boot, Ktor, o Node.js) que expone una API REST. Contendría:
+    *   **Entidades**: Las representaciones de los datos en la base de datos (ej. tablas `User`, `Pet`).
+    *   **Controladores**: Las clases que reciben las peticiones HTTP (ej. `POST /auth/register`) y orquestan la respuesta.
+    *   **Rutas**: La definición de los endpoints de la API (ej. `/auth/login`, `/pets/{id}`).
 
 ## Tecnologías Utilizadas
 
 *   **Lenguaje**: Kotlin
-*   **Interfaz de Usuario**: Jetpack Compose
-*   **Navegación**: Jetpack Navigation Compose
+*   **UI**: Jetpack Compose
 *   **Arquitectura**: MVVM
+*   **Inyección de Dependencias**: Hilt
+*   **Navegación**: Jetpack Navigation Compose
 *   **Networking**: Retrofit
 *   **Persistencia Local**: Jetpack DataStore
 *   **Animaciones**: Lottie
+*   **Procesamiento de Anotaciones**: KSP
 *   **Herramienta de Construcción**: Gradle
 
-## Estructura del Proyecto
-
-El código fuente está organizado de manera modular para facilitar su comprensión y mantenimiento:
+## Estructura del Proyecto Detallada
 
 ```
-app/
-└── src/
-    └── main/
-        └── java/
-            └── com/example/perrosygatos/
-                ├── MainActivity.kt               # Actividad principal y punto de entrada de la app.
-                ├── AppNavigation.kt              # Define el grafo de navegación principal.
-                ├── auth/                         # Módulo de autenticación.
-                │   ├── AuthScreen.kt             # Pantalla que ofrece opción de login o registro.
-                │   ├── LoginScreen.kt            # Composable para el inicio de sesión.
-                │   └── RegisterScreen.kt         # Composable para el registro de usuarios.
-                ├── data/                         # Módulo de datos (modelos, red, persistencia).
-                │   ├── model/                    # Clases de datos (Pet, User).
-                │   ├── network/                  # Lógica de red (ApiService, RetrofitClient).
-                │   ├── datastore/                # Gestión de DataStore (UserDataStore).
-                │   └── PetRepository.kt          # Repositorio para manejar los datos de mascotas.
-                ├── home/                         # Módulo principal post-login.
-                │   ├── HomeScreen.kt             # Pantalla de bienvenida.
-                │   └── PetManagementScreen.kt    # Pantalla para el CRUD de mascotas.
-                ├── viewModel/                    # ViewModels de la aplicación.
-                │   └── AuthViewModel.kt          # ViewModel que gestiona la lógica de autenticación y mascotas.
-                └── ui/
-                    └── theme/                    # Tema de la app (colores, tipografía, formas).
+app/src/main/java/com/example/perrosygatos/
+├── MainActivity.kt               # Actividad principal, contiene el Scaffold y TopAppBar.
+├── GuauMiauApp.kt                # Clase Application para Hilt.
+├── AppNavigation.kt              # Define el grafo de navegación de Compose.
+├── auth/                         # Módulo de UI de autenticación.
+│   ├── AuthScreen.kt             # Orquestador de las pantallas de Login y Registro.
+│   ├── LoginScreen.kt
+│   └── RegisterScreen.kt
+├── data/                         # Módulo de datos.
+│   ├── datastore/                # UserDataStore para la sesión.
+│   ├── model/                    # Data classes (User, Pet, etc.).
+│   ├── network/                  # Servicios de Retrofit (AuthService, PetService).
+│   └── repository/               # Repositorios (AuthRepository, PetRepository).
+├── di/                           # Módulo de Inyección de Dependencias (Hilt).
+│   └── AppModule.kt
+├── home/                         # Módulo de UI post-login.
+│   ├── HomeScreen.kt
+│   └── PetManagementScreen.kt
+├── ui/                           # Módulo de UI y tema.
+│   └── theme/                    # Color.kt, Theme.kt, Typography.kt.
+└── viewModel/                    # ViewModels y clases de estado (State).
+    ├── AuthViewModel.kt
+    ├── LoginState.kt
+    ├── RegisterState.kt
+    └── PetUiState.kt
 ```
-
 
 **Instalación y Ejecución:**
 
-1.  **Clona el repositorio** en tu máquina local.
-2.  **Abre el proyecto** con Android Studio.
-3.  Espera a que la **sincronización de Gradle** se complete para descargar todas las dependencias.
-4.  **(Opcional pero Recomendado)** Si tienes un backend, asegúrate de que esté corriendo en `http://10.0.2.2:8080/`. Si no, la app funcionará pero mostrará errores de red en las secciones de mascotas.
-5.  **Selecciona la configuración de ejecución `app`** en la barra superior.
-6.  **Elige un emulador o conecta un dispositivo físico** con Android.
-7.  **Presiona "Run" (▶️)** para compilar y ejecutar la aplicación.
-8.  Una vez en la aplicación, **regístrate** con un nuevo usuario o **inicia sesión** para ver la pantalla de bienvenida.
+1.  **Clona el repositorio**.
+2.  **Abre con Android Studio**.
+3.  Espera a que **Gradle se sincronice**.
+4.  **(Recomendado)** Asegúrate de que tu backend esté corriendo en `http://10.0.2.2:8080/` para que las llamadas de red funcionen.
+5.  **Ejecuta (▶️)** la aplicación.
