@@ -11,6 +11,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
+// Se elimina la importación de Typography para resolver la ambigüedad con la definición local.
+
 private val DarkColorScheme = darkColorScheme(
     primary = PrimaryDark,
     onPrimary = OnPrimaryDark,
@@ -79,7 +81,7 @@ fun PerrosygatosTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography, // Se añade la línea que faltaba
+        typography = Typography,
         content = content
     )
 }

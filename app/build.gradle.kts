@@ -58,7 +58,6 @@ android {
     buildFeatures {
         compose = true
     }
-    // El bloque composeOptions se elimina según las nuevas prácticas
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -92,6 +91,7 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("com.airbnb.android:lottie-compose:6.4.0")
+    implementation("io.coil-kt:coil-compose:2.4.0") // DEPENDENCIA AÑADIDA
 
     // Hilt
     implementation(libs.google.dagger.hilt.android)
