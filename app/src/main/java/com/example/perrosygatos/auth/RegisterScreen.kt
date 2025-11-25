@@ -49,7 +49,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.perrosygatos.data.model.Pet
 import com.example.perrosygatos.viewModel.AuthViewModel
-import com.example.perrosygatos.viewModel.PetUiState
 import com.example.perrosygatos.viewModel.RegisterState
 import kotlinx.coroutines.flow.collectLatest
 
@@ -60,7 +59,8 @@ fun RegisterScreen(
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val state by viewModel.registerState.collectAsState<RegisterState>()
-    val petState by viewModel.petState.collectAsState()
+    // Ya no observamos petState aquí porque usamos la lista local de mascotas en RegisterState
+    
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
@@ -147,24 +147,16 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            val currentPetState = petState
-            if (currentPetState is PetUiState.Loading) {
-                item { CircularProgressIndicator() }
-            }
-
-            if (currentPetState is PetUiState.Error) {
-                item { Text(currentPetState.message, color = MaterialTheme.colorScheme.error) }
-            }
-
-            if (currentPetState is PetUiState.Success) {
-                items(currentPetState.pets) { pet ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("${pet.name} (${pet.type})")
-                        Button(onClick = { viewModel.deletePet(pet.id) }) { Text("Eliminar") }
+            // LISTA DE MASCOTAS LOCALES (Antes de enviar al backend)
+            items(state.pets) { pet ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("🐾 ${pet.name} (${pet.type})")
+                    Button(onClick = { viewModel.removePetLocal(pet) }, enabled = !state.registrationSuccess) {
+                        Text("Eliminar")
                     }
                 }
             }
@@ -209,14 +201,15 @@ fun RegisterScreen(
                 Button(
                     onClick = {
                         if (petName.isNotBlank()) {
-                            viewModel.addPet(Pet(id = 0, name = petName, type = petType))
+                            // Añadir mascota LOCALMENTE
+                            viewModel.addPetLocal(Pet(id = System.currentTimeMillis(), name = petName, type = petType))
                             vibrar(context)
                             petName = ""
                         }
                     },
                     enabled = !state.registrationSuccess
                 ) {
-                    Text("Añadir Mascota")
+                    Text("Añadir Mascota a la Lista")
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }

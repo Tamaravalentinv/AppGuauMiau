@@ -12,8 +12,11 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -57,5 +60,12 @@ object AppModule {
     @Singleton
     fun providePetRepository(petService: PetService): PetRepository {
         return PetRepository(petService)
+    }
+
+    @Provides
+    @Singleton
+    @Named("IO")
+    fun provideIoDispatcher(): CoroutineDispatcher {
+        return Dispatchers.IO
     }
 }

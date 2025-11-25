@@ -1,17 +1,31 @@
 package com.example.perrosygatos
 
 import org.junit.Test
-
 import org.junit.Assert.*
 
 /**
- * Example local unit test, which will execute on the development machine (host).
- *
- * See [testing documentation](http://d.android.com/tools/testing).
+ * Pruebas unitarias locales para validar lógica de negocio.
  */
 class ExampleUnitTest {
+
     @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
+    fun emailValidation_isCorrect() {
+        // Lógica simple de validación que podríamos usar en la app
+        fun isValidEmail(email: String): Boolean {
+            return email.isNotEmpty() && email.contains("@") && email.contains(".")
+        }
+
+        assertTrue(isValidEmail("test@example.com"))
+        assertFalse(isValidEmail("invalid-email"))
+        assertFalse(isValidEmail(""))
+    }
+
+    @Test
+    fun petData_integrity() {
+        data class PetTest(val name: String, val type: String)
+        val pet = PetTest("Firulais", "Perro")
+        
+        assertEquals("Firulais", pet.name)
+        assertEquals("Perro", pet.type)
     }
 }

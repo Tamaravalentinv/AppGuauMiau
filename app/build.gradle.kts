@@ -91,7 +91,7 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("com.airbnb.android:lottie-compose:6.4.0")
-    implementation("io.coil-kt:coil-compose:2.4.0") // DEPENDENCIA AÑADIDA
+    implementation("io.coil-kt:coil-compose:2.4.0") 
 
     // Hilt
     implementation(libs.google.dagger.hilt.android)
@@ -100,6 +100,8 @@ dependencies {
 
 
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

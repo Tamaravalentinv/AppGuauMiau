@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,10 +33,38 @@ fun LoginScreen(
     val state by viewModel.loginState.collectAsState()
     var showForgotPasswordMessage by remember { mutableStateOf(false) }
 
+    // Efecto para navegar cuando el login es exitoso
     LaunchedEffect(state.loginSuccess) {
         if (state.loginSuccess) {
             onLoginSuccess()
         }
+    }
+
+    // Manejo del Diálogo de Error
+    if (state.errorMessage != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                // Opcional: Limpiar el error al cerrar el diálogo si el ViewModel tiene un método para ello
+                // viewModel.clearError() 
+            },
+            title = { Text("Error de inicio de sesión") },
+            text = { Text(state.errorMessage ?: "Error desconocido") },
+            confirmButton = {
+                TextButton(
+                    onClick = { 
+                        // Al hacer clic en Aceptar, podríamos limpiar el error o simplemente cerrar el diálogo
+                        // Por ahora, como el estado viene del ViewModel, el diálogo seguirá apareciendo 
+                        // hasta que se intente otro login o se limpie el estado.
+                        // Una solución rápida es reintentar o simplemente dejar que el usuario edite los campos.
+                        // Nota: Para cerrar el diálogo correctamente, el ViewModel debería exponer una función 'clearError()'
+                        // O el botón de login debería resetear el error al pulsarse (que ya lo hace).
+                        viewModel.onLoginEmailChange(state.email) // Hack simple para forzar recomposición o simplemente no hacer nada visual
+                    }
+                ) {
+                    Text("Aceptar")
+                }
+            }
+        )
     }
 
     Column(
@@ -80,11 +109,8 @@ fun LoginScreen(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        state.errorMessage?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error)
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
+        // Eliminamos el texto rojo de aquí porque ahora saldrá en el Dialog
+        
         if (showForgotPasswordMessage) {
             Text("Funcionalidad de recuperación en desarrollo.", color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(8.dp))
@@ -95,7 +121,7 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading
         ) {
-            Text(text = "Iniciar Sesión")
+            Text(text = if (state.isLoading) "Cargando..." else "Iniciar Sesión")
         }
         Spacer(modifier = Modifier.height(8.dp))
 

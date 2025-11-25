@@ -2,7 +2,6 @@ package com.example.perrosygatos.data.repository
 
 import com.example.perrosygatos.data.datastore.UserDataStore
 import com.example.perrosygatos.data.model.LoginRequest
-import com.example.perrosygatos.data.model.LoginResponse
 import com.example.perrosygatos.data.model.User
 import com.example.perrosygatos.data.network.AuthService
 import kotlinx.coroutines.flow.first
@@ -37,14 +36,16 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun loginUser(credentials: LoginRequest): Result<LoginResponse> {
+    suspend fun loginUser(credentials: LoginRequest): Result<User> {
         return try {
             val response = authService.login(credentials)
             if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null) {
-                    userDataStore.saveSessionToken(body.token)
-                    Result.success(body)
+                val user = response.body()
+                if (user != null) {
+                    // Usamos el ID del usuario como token de sesión
+                    val sessionToken = user.id?.toString() ?: "session_active"
+                    userDataStore.saveSessionToken(sessionToken)
+                    Result.success(user)
                 } else {
                     Result.failure(Exception("Respuesta de login vacía."))
                 }

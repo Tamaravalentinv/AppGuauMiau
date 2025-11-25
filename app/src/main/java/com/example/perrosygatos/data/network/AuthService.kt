@@ -1,7 +1,6 @@
-package com.example.perrosygatos.data.network // <-- CORREGIDO
+package com.example.perrosygatos.data.network
 
 import com.example.perrosygatos.data.model.LoginRequest
-import com.example.perrosygatos.data.model.LoginResponse
 import com.example.perrosygatos.data.model.User
 import retrofit2.Response
 import retrofit2.http.Body
@@ -14,8 +13,8 @@ import retrofit2.http.POST
 interface AuthService {
 
     @POST("auth/register")
-    suspend fun register(@Body user: User): Response<Void>
+    suspend fun register(@Body user: User): Response<User>
 
     @POST("auth/login")
-    suspend fun login(@Body credentials: LoginRequest): Response<LoginResponse>
+    suspend fun login(@Body credentials: LoginRequest): Response<User>
 }

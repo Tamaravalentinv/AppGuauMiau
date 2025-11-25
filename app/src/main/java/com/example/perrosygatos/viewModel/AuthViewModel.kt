@@ -8,6 +8,7 @@ import com.example.perrosygatos.data.model.User
 import com.example.perrosygatos.data.repository.AuthRepository
 import com.example.perrosygatos.data.repository.PetRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,11 +17,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import javax.inject.Named
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val petRepository: PetRepository
+    private val petRepository: PetRepository,
+    @Named("IO") private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
     private val _registerState = MutableStateFlow(RegisterState())
@@ -40,7 +43,7 @@ class AuthViewModel @Inject constructor(
     }
 
     fun onAppStart() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             try {
                 if (authRepository.checkSession()) {
                     _loginState.update { it.copy(sessionActive = true) }
@@ -55,7 +58,7 @@ class AuthViewModel @Inject constructor(
     }
 
     fun loadPets() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             _petState.value = PetUiState.Loading
             petRepository.getPets().onSuccess {
                 _petState.value = PetUiState.Success(it)
@@ -65,11 +68,14 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    // Agrega una mascota al backend directamente (Para PetManagementScreen)
     fun addPet(pet: Pet) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             _petState.value = PetUiState.Loading
             try {
-                petRepository.addPet(pet).onSuccess {
+                // Nos aseguramos de enviar ID null para crear
+                val newPet = pet.copy(id = null)
+                petRepository.addPet(newPet).onSuccess {
                     sendEvent("Mascota agregada con éxito")
                     loadPets()
                 }.onFailure { exception ->
@@ -83,13 +89,54 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun updatePet(id: Long, pet: Pet) {
+        viewModelScope.launch(ioDispatcher) {
+            _petState.value = PetUiState.Loading
+            try {
+                petRepository.updatePet(id, pet).onSuccess {
+                    sendEvent("Mascota actualizada")
+                    loadPets()
+                }.onFailure {
+                    sendEvent("Error al actualizar: ${it.message}")
+                    loadPets()
+                }
+            } catch (e: Exception) {
+                sendEvent("Error: ${e.localizedMessage}")
+                loadPets()
+            }
+        }
+    }
+
     fun deletePet(petId: Long) {
-        viewModelScope.launch(Dispatchers.IO) {
-            // ... (Lógica de borrar mascota)
+        viewModelScope.launch(ioDispatcher) {
+             try {
+                petRepository.deletePet(petId).onSuccess {
+                    sendEvent("Mascota eliminada")
+                    loadPets()
+                }.onFailure {
+                    sendEvent("Error al eliminar: ${it.message}")
+                }
+            } catch (e: Exception) {
+                sendEvent("Error: ${e.localizedMessage}")
+            }
         }
     }
 
     // --- Registration Logic ---
+    
+    // Gestión local de mascotas para el registro
+    fun addPetLocal(pet: Pet) {
+        val currentPets = _registerState.value.pets.toMutableList()
+        currentPets.add(pet)
+        _registerState.update { it.copy(pets = currentPets) }
+    }
+
+    fun removePetLocal(pet: Pet) {
+        val currentPets = _registerState.value.pets.toMutableList()
+        currentPets.remove(pet)
+        _registerState.update { it.copy(pets = currentPets) }
+    }
+
     fun onFullNameChange(fullName: String) {
         _registerState.update { it.copy(fullName = fullName) }
     }
@@ -111,7 +158,7 @@ class AuthViewModel @Inject constructor(
     }
 
     fun register() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             val state = registerState.value
 
             // VALIDACIONES LOCALES
@@ -134,14 +181,18 @@ class AuthViewModel @Inject constructor(
 
             try {
                 _registerState.update { it.copy(isLoading = true) }
-                // Construir el objeto User REAL para enviarlo al backend
+                
+                // Limpiamos los IDs locales (temporales) para que el backend genere los suyos
+                val petsForBackend = state.pets.map { it.copy(id = null) }
+
+                // Construir el objeto User REAL
                 val user = User(
-                    id = 0, // El ID lo genera el backend
+                    id = null, 
                     name = state.fullName,
                     email = state.email,
                     password = state.password,
                     phone = state.phone,
-                    pets = emptyList() // Las mascotas se añaden después
+                    pets = petsForBackend
                 )
 
                 // Llamada al repositorio
@@ -149,7 +200,6 @@ class AuthViewModel @Inject constructor(
 
                 if (result.isSuccess) {
                     sendEvent("Usuario registrado correctamente 🎉")
-                    // Limpiar formulario y marcar éxito
                     _registerState.update { RegisterState(registrationSuccess = true) }
 
                 } else {
@@ -174,14 +224,43 @@ class AuthViewModel @Inject constructor(
     }
 
     fun login() {
-        viewModelScope.launch(Dispatchers.IO) {
-            // ... (Lógica de login)
+        viewModelScope.launch(ioDispatcher) {
+            val state = _loginState.value
+            if (state.email.isBlank() || state.password.isBlank()) {
+                sendEvent("Completa todos los campos")
+                _loginState.update { it.copy(errorMessage = "Completa todos los campos") }
+                return@launch
+            }
+
+            _loginState.update { it.copy(isLoading = true, errorMessage = null) }
+            try {
+                val request = LoginRequest(state.email, state.password)
+                val result = authRepository.loginUser(request)
+                
+                if (result.isSuccess) {
+                    _loginState.update { it.copy(loginSuccess = true, sessionActive = true) }
+                    sendEvent("Bienvenido de nuevo!")
+                    loadPets() // Cargar mascotas después del login exitoso
+                } else {
+                    val errorMsg = result.exceptionOrNull()?.message ?: "Error de credenciales"
+                    _loginState.update { it.copy(errorMessage = errorMsg) }
+                    sendEvent(errorMsg)
+                }
+            } catch (e: Exception) {
+                val errorMsg = "Error: ${e.localizedMessage}"
+                _loginState.update { it.copy(errorMessage = errorMsg) }
+                sendEvent(errorMsg)
+            } finally {
+                _loginState.update { it.copy(isLoading = false) }
+            }
         }
     }
 
     fun logout() {
-        viewModelScope.launch(Dispatchers.IO) {
-            // ... (Lógica de logout)
+        viewModelScope.launch(ioDispatcher) {
+            authRepository.logout()
+            _loginState.update { LoginState(sessionActive = false) }
+            _registerState.value = RegisterState() // Reset registro
         }
     }
 }
